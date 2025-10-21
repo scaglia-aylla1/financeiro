@@ -27,17 +27,36 @@ public class SecurityFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+
+        // 1. Tenta recuperar o token
         var token = this.recoverToken(request);
-        var login = this.tokenService.validateToken(token);
 
-        if (login != null){
-            User user = userRepository.findByEmail(login).orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-            var authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
-            var authentication = new UsernamePasswordAuthenticationToken(user, null, authorities);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        // 2. Só tenta autenticar se um token foi encontrado
+        if (token != null) {
+
+            // 3. Valida o token e tenta extrair o login (email)
+            var login = this.tokenService.validateToken(token);
+
+            // 4. Se o login for válido, autentica no contexto do Spring Security
+            if (login != null) {
+                User user = userRepository.findByEmail(login)
+                        .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + login)); // Boa prática incluir o login na msg
+
+                // Definição das Autoridades (ROLE_USER é suficiente para este projeto)
+                var authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+
+                // Criação do objeto de autenticação (passando o objeto User para o contexto)
+                var authentication = new UsernamePasswordAuthenticationToken(user, null, authorities);
+
+                // Autentica o usuário na requisição atual
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+            // Se o token for inválido (login == null), o SecurityContextHolder fica vazio.
+            // O Spring Security tratará isso na próxima etapa como não autenticado.
         }
-        filterChain.doFilter(request, response);
 
+        // 5. Continua a cadeia de filtros. ESSENCIAL!
+        filterChain.doFilter(request, response);
     }
 
     private String recoverToken(HttpServletRequest request) {
