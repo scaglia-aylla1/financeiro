@@ -13,10 +13,13 @@ import com.scaglia.financeiro.repository.CategoriaRepository;
 import com.scaglia.financeiro.repository.DespesaRepository;
 import com.scaglia.financeiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,12 +100,18 @@ public class DespesaService {
     }
 
     // 2. Listar Despesas do Usuário Logado
-    public List<DespesaResponseDTO> listarDespesasUsuario() {
+    public Page<DespesaResponseDTO> listarDespesasUsuario(
+            Long categoriaId,
+            LocalDate dataInicial,
+            LocalDate dataFinal,
+            Pageable pageable) {
         String usuarioId = getUsuarioLogado().getId();
-        // **NOTA:** Você precisará criar este método no DespesaRepository!
-        return despesaRepository.findAllByUsuarioId(usuarioId).stream()
-                .map(this::toResponseDTO)
-                .collect(Collectors.toList());
+
+        Page<Despesa> despesaPage = despesaRepository.buscarComFiltros(
+                usuarioId, categoriaId, dataInicial, dataFinal, pageable
+        );
+
+        return despesaPage.map(this::toResponseDTO);
     }
 
     // 3. Buscar Despesa por ID

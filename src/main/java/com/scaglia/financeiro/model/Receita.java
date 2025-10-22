@@ -26,7 +26,7 @@ public class Receita {
     private Long id;
 
     @NotBlank(message = "A descrição da receita é obrigatória")
-    @Column(nullable = false)
+    @Column(name = "descricao", nullable = false, columnDefinition = "VARCHAR(255)")
     private String descricao;
 
     @NotNull(message = "O valor da receita é obrigatório")

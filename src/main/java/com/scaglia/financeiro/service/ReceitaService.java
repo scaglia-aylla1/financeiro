@@ -12,10 +12,13 @@ import com.scaglia.financeiro.repository.CategoriaRepository;
 import com.scaglia.financeiro.repository.ReceitaRepository;
 import com.scaglia.financeiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,6 +87,7 @@ public class ReceitaService {
         }
     }
 
+
     // --- CRUD ---
 
     /**
@@ -114,16 +118,22 @@ public class ReceitaService {
     }
 
     /**
-     * 2. Lista todas as Receitas pertencentes ao usuário logado.
+     * 2. Listar Receitas do Usuário Logado com Filtros e Paginação.
      */
-    public List<ReceitaResponseDTO> listarReceitasUsuario() {
+    public Page<ReceitaResponseDTO> listarReceitasUsuario(
+            Long categoriaId,
+            LocalDate dataInicial,
+            LocalDate dataFinal,
+            Pageable pageable) {
+
         String usuarioId = getUsuarioLogado().getId();
 
-        // CORRETO: Buscar apenas as receitas do usuário logado.
-        // **NOTA:** Este método (findAllByUsuarioId) deve ser criado no ReceitaRepository.
-        return receitaRepository.findAllByUsuarioId(usuarioId).stream()
-                .map(this::toResponseDTO)
-                .collect(Collectors.toList());
+        // **MUDANÇA CRUCIAL:** Novo método no Repository para aceitar os filtros
+        Page<Receita> receitasPage = receitaRepository.buscarComFiltros(
+                usuarioId, categoriaId, dataInicial, dataFinal, pageable
+        );
+
+        return receitasPage.map(this::toResponseDTO);
     }
 
     /**

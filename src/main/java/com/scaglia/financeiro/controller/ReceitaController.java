@@ -7,10 +7,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Tag(name = "Receitas", description = "Endpoints para gerenciamento das Receitas financeiras")
@@ -21,10 +27,20 @@ public class ReceitaController {
 
     private final ReceitaService receitaService;
 
-    @Operation(summary = "Lista todas as receitas do usuário logado")
+    @Operation(summary = "Lista receitas do usuário com filtros, paginação e ordenação")
     @GetMapping
-    public ResponseEntity<List<ReceitaResponseDTO>> listarReceitas() {
-        List<ReceitaResponseDTO> receitas = receitaService.listarReceitasUsuario();
+    public ResponseEntity<Page<ReceitaResponseDTO>> listarReceitas(
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicial,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFinal,
+
+            // Parâmetro de Paginação:
+            @PageableDefault(size = 10, sort = "data", direction = Sort.Direction.DESC) Pageable pageable) {
+
+
+        Page<ReceitaResponseDTO> receitas = receitaService.listarReceitasUsuario(
+                categoriaId, dataInicial, dataFinal, pageable
+        );
         return ResponseEntity.ok(receitas);
     }
 
