@@ -13,11 +13,13 @@ import com.scaglia.financeiro.repository.CategoriaRepository;
 import com.scaglia.financeiro.repository.DespesaRepository;
 import com.scaglia.financeiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DespesaService {
 
     private final DespesaRepository despesaRepository;
@@ -77,6 +80,7 @@ public class DespesaService {
     // --- CRUD ---
 
     // 1. Criar Despesa
+    @Transactional
     public DespesaResponseDTO criarDespesa(ReceitaRequestDTO dto) { // Usando o DTO de Requisição de Receita
 
         Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
@@ -96,10 +100,12 @@ public class DespesaService {
         despesa.setUsuario(getUsuarioLogado());
 
         Despesa savedDespesa = despesaRepository.save(despesa);
+        log.info("Despesa criada com sucesso. userId={}, despesaId={}", despesa.getUsuario().getId(), savedDespesa.getId());
         return toResponseDTO(savedDespesa);
     }
 
     // 2. Listar Despesas do Usuário Logado
+    @Transactional(readOnly = true)
     public Page<DespesaResponseDTO> listarDespesasUsuario(
             Long categoriaId,
             LocalDate dataInicial,
@@ -115,6 +121,7 @@ public class DespesaService {
     }
 
     // 3. Buscar Despesa por ID
+    @Transactional(readOnly = true)
     public DespesaResponseDTO buscarPorId(Long id) {
         Despesa despesa = despesaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Despesa", id));
@@ -123,6 +130,7 @@ public class DespesaService {
     }
 
     // 4. Atualizar Despesa
+    @Transactional
     public DespesaResponseDTO atualizarDespesa(Long id, ReceitaRequestDTO dto) {
         Despesa despesa = despesaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Despesa", id));
@@ -143,14 +151,17 @@ public class DespesaService {
         despesa.setCategoria(categoria);
 
         Despesa updatedDespesa = despesaRepository.save(despesa);
+        log.info("Despesa atualizada com sucesso. userId={}, despesaId={}", despesa.getUsuario().getId(), updatedDespesa.getId());
         return toResponseDTO(updatedDespesa);
     }
 
     // 5. Deletar Despesa
+    @Transactional
     public void deletarDespesa(Long id) {
         Despesa despesa = despesaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Despesa", id));
         verificarPropriedade(despesa);
         despesaRepository.delete(despesa);
+        log.info("Despesa deletada com sucesso. userId={}, despesaId={}", despesa.getUsuario().getId(), despesa.getId());
     }
 }

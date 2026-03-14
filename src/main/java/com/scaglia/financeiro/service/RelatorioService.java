@@ -6,9 +6,11 @@ import com.scaglia.financeiro.repository.DespesaRepository;
 import com.scaglia.financeiro.repository.ReceitaRepository;
 import com.scaglia.financeiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -17,6 +19,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RelatorioService {
 
     private final ReceitaRepository receitaRepository;
@@ -37,6 +40,7 @@ public class RelatorioService {
     /**
      * Calcula o balanço financeiro do usuário para um mês e ano específicos.
      */
+    @Transactional(readOnly = true)
     public BalancoResponseDTO calcularBalancoMensal(int mes, int ano) {
         String usuarioId = getUsuarioLogado().getId();
 
@@ -59,13 +63,16 @@ public class RelatorioService {
         );
 
         // 5. Constrói o DTO de Resposta
-        return BalancoResponseDTO.builder()
+        BalancoResponseDTO balanco = BalancoResponseDTO.builder()
                 .totalReceitas(totalReceitas)
                 .totalDespesas(totalDespesas)
                 .balancoFinal(balancoFinal)
                 .receitasPorCategoria(receitasPorCategoria)
                 .despesasPorCategoria(despesasPorCategoria)
                 .build();
+        log.info("Balanço mensal calculado. userId={}, ano={}, mes={}, balancoFinal={}",
+                usuarioId, ano, mes, balancoFinal);
+        return balanco;
     }
 
     /**

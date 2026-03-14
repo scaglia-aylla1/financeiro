@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class User extends AbstractAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

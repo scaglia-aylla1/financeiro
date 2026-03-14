@@ -19,7 +19,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Receita {
+public class Receita extends AbstractAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +31,7 @@ public class Receita {
 
     @NotNull(message = "O valor da receita é obrigatório")
     @DecimalMin(value = "0.01", message = "O valor deve ser positivo")
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal valor;
 
     @NotNull(message = "A data da receita é obrigatória")

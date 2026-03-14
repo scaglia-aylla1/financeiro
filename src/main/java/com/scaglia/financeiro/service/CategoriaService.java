@@ -9,6 +9,7 @@ import com.scaglia.financeiro.repository.DespesaRepository;
 import com.scaglia.financeiro.repository.ReceitaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +33,7 @@ public class CategoriaService {
     }
 
     // 1. Criar Categoria
+    @Transactional
     public CategoriaResponseDTO criarCategoria(CategoriaRequestDTO dto) {
 
         // Regra de Negócio: Garante que o nome da categoria é único (ignorando caixa)
@@ -48,6 +50,7 @@ public class CategoriaService {
     }
 
     // 2. Buscar Categoria por ID
+    @Transactional(readOnly = true)
     public CategoriaResponseDTO buscarPorId(Long id) {
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria", id));
@@ -55,6 +58,7 @@ public class CategoriaService {
     }
 
     // 3. Listar Todas as Categorias
+    @Transactional(readOnly = true)
     public List<CategoriaResponseDTO> listarTodas() {
         return categoriaRepository.findAll().stream()
                 .map(this::toResponseDTO)
@@ -62,6 +66,7 @@ public class CategoriaService {
     }
 
     // 4. Atualizar Categoria
+    @Transactional
     public CategoriaResponseDTO atualizarCategoria(Long id, CategoriaRequestDTO dto) {
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria", id));
@@ -78,6 +83,7 @@ public class CategoriaService {
         return toResponseDTO(updatedCategoria);
     }
 
+    @Transactional
     public void deletarCategoria(Long id) {
 
         Categoria categoria = categoriaRepository.findById(id)
