@@ -18,8 +18,8 @@ public class TokenService {
     @Value("${api.security.token.secret}")
     private String secret;
 
-    public String generateToken(User user){
-        try{
+    public String generateToken(User user) {
+        try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
 
             String token = JWT.create()
@@ -29,8 +29,8 @@ public class TokenService {
                     .sign(algorithm);
             return token;
 
-        }catch (JWTCreationException exception){
-            throw new RuntimeException("Erro durante a autenticação");
+        } catch (JWTCreationException exception) {
+            throw new IllegalStateException("Erro ao gerar token JWT", exception);
         }
     }
     public String validateToken(String token){
