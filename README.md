@@ -4,11 +4,35 @@ API REST para controle de receitas e despesas, com autenticação JWT, categoria
 
 ## Tecnologias
 
-- **Java 21** · **Spring Boot 3.5** · **Spring Security** · **JPA/Hibernate** · **PostgreSQL**
-- **SpringDoc OpenAPI** (Swagger) · **Lombok** · **JWT (Auth0)**
+- **Java 21** 
+- **Spring Boot 3.5** 
+- **Spring Security** 
+- **JPA/Hibernate** 
+- **PostgreSQL**
+- **SpringDoc OpenAPI** (Swagger) 
+- **Lombok** 
+- **JWT (Auth0)**
 
-## Como rodar
+## 🧪 Estratégia de Testes (Qualidade & Segurança)
+O projeto segue as melhores práticas de engenharia de software, garantindo que a lógica de negócio e a segurança estejam protegidas contra regressões.
 
+**Testes de Unidade** (Service Layer): Implementados com JUnit 5 e Mockito. Validam regras de negócio complexas e garantem a Prevenção de IDOR (um usuário nunca acessa dados de outro).
+
+**Testes de Integração** (Repository Layer): Utilizam @DataJpaTest e banco H2. Validam queries JPQL customizadas, filtros de data e o comportamento de auditoria JPA.
+
+**Testes de Endpoint** (Controller Layer): Utilizam MockMvc para validar contratos de API, códigos de status HTTP e o funcionamento do GlobalExceptionHandler.
+
+Para rodar os testes:
+```
+  ./mvnw test
+```
+## 🏗️ Arquitetura e Diferenciais
+Auditoria Automática: Todas as entidades herdam de AbstractAuditEntity, registrando automaticamente data de criação/atualização e o usuário responsável.
+
+Tratamento Global de Erros: Respostas padronizadas para exceções de validação, autenticação e recursos não encontrados.
+
+Padronização DTO: Uso de Java Records para objetos de transferência imutáveis e concisos.
+## Como Rodar
 ### Pré-requisitos
 
 - JDK 21

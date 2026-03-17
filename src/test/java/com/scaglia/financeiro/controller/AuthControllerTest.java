@@ -54,14 +54,16 @@ class AuthControllerTest {
     }
 
     @Test
-    void login_DeveRetornar400_QuandoCorpoDaRequisicaoForInvalido() throws Exception {
-        // GIVEN - Criamos um DTO inválido (ex: sem email, se sua validação @Valid exigir)
-        LoginRequestDto loginInvalido = new LoginRequestDto("", ""); 
+void login_DeveRetornar400EDetalhesDoErro_QuandoEmailForInvalido() throws Exception {
+    // GIVEN: Email com formato errado e senha vazia
+    LoginRequestDto loginInvalido = new LoginRequestDto("email-errado", ""); 
 
-        // WHEN & THEN
-        mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(loginInvalido)))
-                .andExpect(status().isBadRequest()); // Espera erro 400 por causa do @Valid
-    }
+    // WHEN & THEN
+    mockMvc.perform(post("/api/v1/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(loginInvalido)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR")) // Valida o campo do seu ErrorDetails
+            .andExpect(jsonPath("$.message").value("Erro de Validação"));
+}
 }

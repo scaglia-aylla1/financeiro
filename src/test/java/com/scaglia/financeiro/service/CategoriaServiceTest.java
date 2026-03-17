@@ -18,8 +18,6 @@ import com.scaglia.financeiro.repository.CategoriaRepository;
 import com.scaglia.financeiro.repository.DespesaRepository;
 import com.scaglia.financeiro.repository.ReceitaRepository;
 
-import java.util.Optional;
-
 // Importe suas classes de DTO, Entity e Exception aqui
 
 @ExtendWith(MockitoExtension.class)
