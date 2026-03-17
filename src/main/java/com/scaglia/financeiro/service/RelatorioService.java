@@ -1,14 +1,10 @@
 package com.scaglia.financeiro.service;
 
 import com.scaglia.financeiro.dto.BalancoResponseDTO;
-import com.scaglia.financeiro.model.User;
 import com.scaglia.financeiro.repository.DespesaRepository;
 import com.scaglia.financeiro.repository.ReceitaRepository;
-import com.scaglia.financeiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,25 +20,14 @@ public class RelatorioService {
 
     private final ReceitaRepository receitaRepository;
     private final DespesaRepository despesaRepository;
-    private final UserRepository userRepository;
-
-    private User getUsuarioLogado() {
-        // Lógica de obtenção do User do contexto (idêntica ao ReceitaService)
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof User) {
-            return (User) principal;
-        }
-        String emailUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + emailUsuario));
-    }
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
 
     /**
      * Calcula o balanço financeiro do usuário para um mês e ano específicos.
      */
     @Transactional(readOnly = true)
     public BalancoResponseDTO calcularBalancoMensal(int mes, int ano) {
-        String usuarioId = getUsuarioLogado().getId();
+        String usuarioId = usuarioAutenticadoService.getUsuarioLogado().getId();
 
         // 1. Soma Total de Receitas
         BigDecimal totalReceitas = receitaRepository.somarReceitasPorMes(usuarioId, mes, ano);

@@ -1,29 +1,23 @@
 package com.scaglia.financeiro.service;
 
 
-import com.scaglia.financeiro.dto.CategoriaResponseDTO;
+import com.scaglia.financeiro.dto.DespesaRequestDTO;
 import com.scaglia.financeiro.dto.DespesaResponseDTO;
-import com.scaglia.financeiro.dto.ReceitaRequestDTO;
 import com.scaglia.financeiro.enums.TipoMovimentacao;
 import com.scaglia.financeiro.exception.RecursoNaoEncontradoException;
+import com.scaglia.financeiro.mapper.DespesaMapper;
 import com.scaglia.financeiro.model.Categoria;
 import com.scaglia.financeiro.model.Despesa;
-import com.scaglia.financeiro.model.User;
 import com.scaglia.financeiro.repository.CategoriaRepository;
 import com.scaglia.financeiro.repository.DespesaRepository;
-import com.scaglia.financeiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,47 +26,11 @@ public class DespesaService {
 
     private final DespesaRepository despesaRepository;
     private final CategoriaRepository categoriaRepository;
-    private final UserRepository userRepository;
-
-    // --- Métodos de Suporte e Segurança (Idênticos ao ReceitaService) ---
-
-    private User getUsuarioLogado() {
-        // Tenta obter o objeto User completo que foi colocado no contexto pelo SecurityFilter
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if (principal instanceof User) {
-            return (User) principal;
-        }
-
-        String emailUsuario = (String) principal;
-
-        return userRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + emailUsuario));
-    }
-
-    private CategoriaResponseDTO toCategoriaSimplesDTO(Categoria categoria) {
-        // ... (código idêntico ao ReceitaService)
-        CategoriaResponseDTO dto = new CategoriaResponseDTO();
-        dto.setId(categoria.getId());
-        dto.setNome(categoria.getNome());
-        dto.setTipo(categoria.getTipo());
-        return dto;
-    }
-
-    private DespesaResponseDTO toResponseDTO(Despesa despesa) {
-        DespesaResponseDTO dto = new DespesaResponseDTO();
-        dto.setId(despesa.getId());
-        dto.setDescricao(despesa.getDescricao());
-        dto.setValor(despesa.getValor());
-        dto.setData(despesa.getData());
-        dto.setNatureza(despesa.getNatureza());
-        dto.setCategoria(toCategoriaSimplesDTO(despesa.getCategoria()));
-        dto.setUsuarioId(despesa.getUsuario().getId());
-        return dto;
-    }
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
+    private final DespesaMapper despesaMapper;
 
     private void verificarPropriedade(Despesa despesa) {
-        if (!despesa.getUsuario().getId().equals(getUsuarioLogado().getId())) {
+        if (!despesa.getUsuario().getId().equals(usuarioAutenticadoService.getUsuarioLogado().getId())) {
             throw new RecursoNaoEncontradoException("Despesa", despesa.getId());
         }
     }
@@ -81,7 +39,7 @@ public class DespesaService {
 
     // 1. Criar Despesa
     @Transactional
-    public DespesaResponseDTO criarDespesa(ReceitaRequestDTO dto) { // Usando o DTO de Requisição de Receita
+    public DespesaResponseDTO criarDespesa(DespesaRequestDTO dto) {
 
         Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria", dto.getCategoriaId()));
@@ -97,11 +55,11 @@ public class DespesaService {
         despesa.setData(dto.getData());
         despesa.setNatureza(dto.getNatureza());
         despesa.setCategoria(categoria);
-        despesa.setUsuario(getUsuarioLogado());
+        despesa.setUsuario(usuarioAutenticadoService.getUsuarioLogado());
 
         Despesa savedDespesa = despesaRepository.save(despesa);
         log.info("Despesa criada com sucesso. userId={}, despesaId={}", despesa.getUsuario().getId(), savedDespesa.getId());
-        return toResponseDTO(savedDespesa);
+        return despesaMapper.toResponseDTO(savedDespesa);
     }
 
     // 2. Listar Despesas do Usuário Logado
@@ -111,13 +69,13 @@ public class DespesaService {
             LocalDate dataInicial,
             LocalDate dataFinal,
             Pageable pageable) {
-        String usuarioId = getUsuarioLogado().getId();
+        String usuarioId = usuarioAutenticadoService.getUsuarioLogado().getId();
 
         Page<Despesa> despesaPage = despesaRepository.buscarComFiltros(
                 usuarioId, categoriaId, dataInicial, dataFinal, pageable
         );
 
-        return despesaPage.map(this::toResponseDTO);
+        return despesaPage.map(despesaMapper::toResponseDTO);
     }
 
     // 3. Buscar Despesa por ID
@@ -126,12 +84,12 @@ public class DespesaService {
         Despesa despesa = despesaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Despesa", id));
         verificarPropriedade(despesa);
-        return toResponseDTO(despesa);
+        return despesaMapper.toResponseDTO(despesa);
     }
 
     // 4. Atualizar Despesa
     @Transactional
-    public DespesaResponseDTO atualizarDespesa(Long id, ReceitaRequestDTO dto) {
+    public DespesaResponseDTO atualizarDespesa(Long id, DespesaRequestDTO dto) {
         Despesa despesa = despesaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Despesa", id));
         verificarPropriedade(despesa);
@@ -152,7 +110,7 @@ public class DespesaService {
 
         Despesa updatedDespesa = despesaRepository.save(despesa);
         log.info("Despesa atualizada com sucesso. userId={}, despesaId={}", despesa.getUsuario().getId(), updatedDespesa.getId());
-        return toResponseDTO(updatedDespesa);
+        return despesaMapper.toResponseDTO(updatedDespesa);
     }
 
     // 5. Deletar Despesa

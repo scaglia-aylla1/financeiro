@@ -1,22 +1,18 @@
 package com.scaglia.financeiro.service;
 
-import com.scaglia.financeiro.dto.CategoriaResponseDTO;
 import com.scaglia.financeiro.dto.ReceitaRequestDTO;
 import com.scaglia.financeiro.dto.ReceitaResponseDTO;
 import com.scaglia.financeiro.enums.TipoMovimentacao;
 import com.scaglia.financeiro.exception.RecursoNaoEncontradoException;
+import com.scaglia.financeiro.mapper.ReceitaMapper;
 import com.scaglia.financeiro.model.Categoria;
 import com.scaglia.financeiro.model.Receita;
-import com.scaglia.financeiro.model.User;
 import com.scaglia.financeiro.repository.CategoriaRepository;
 import com.scaglia.financeiro.repository.ReceitaRepository;
-import com.scaglia.financeiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,60 +25,14 @@ public class ReceitaService {
 
     private final ReceitaRepository receitaRepository;
     private final CategoriaRepository categoriaRepository;
-    private final UserRepository userRepository;
-
-    // --- Métodos de Suporte e Segurança ---
-
-    /**
-     * Obtém o objeto User completo a partir do contexto de segurança (token JWT).
-     * Garante que a transação será associada ao usuário correto.
-     */
-    // No ReceitaService.java
-    private User getUsuarioLogado() {
-        // Tenta obter o objeto User completo que foi colocado no contexto pelo SecurityFilter
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if (principal instanceof User) {
-            return (User) principal;
-        }
-
-        String emailUsuario = (String) principal;
-
-        return userRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + emailUsuario));
-    }
-
-    private CategoriaResponseDTO toCategoriaSimplesDTO(Categoria categoria) {
-        CategoriaResponseDTO dto = new CategoriaResponseDTO();
-        dto.setId(categoria.getId());
-        dto.setNome(categoria.getNome());
-        dto.setTipo(categoria.getTipo());
-        return dto;
-    }
-
-    /**
-     * Converte a Entidade Receita para o DTO de Resposta, incluindo o ID do usuário (String).
-     */
-    private ReceitaResponseDTO toResponseDTO(Receita receita) {
-        ReceitaResponseDTO dto = new ReceitaResponseDTO();
-        dto.setId(receita.getId());
-        dto.setDescricao(receita.getDescricao());
-        dto.setValor(receita.getValor());
-        dto.setData(receita.getData());
-        dto.setNatureza(receita.getNatureza());
-        dto.setCategoria(toCategoriaSimplesDTO(receita.getCategoria()));
-
-        // CORREÇÃO: Usando String para o ID do Usuário (UUID)
-        dto.setUsuarioId(receita.getUsuario().getId());
-
-        return dto;
-    }
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
+    private final ReceitaMapper receitaMapper;
 
     /**
      * Verifica se a receita pertence ao usuário logado. Essencial para segurança.
      */
     private void verificarPropriedade(Receita receita) {
-        if (!receita.getUsuario().getId().equals(getUsuarioLogado().getId())) {
+        if (!receita.getUsuario().getId().equals(usuarioAutenticadoService.getUsuarioLogado().getId())) {
             // Retorna 404 para esconder a existência do recurso de um usuário não-proprietário.
             throw new RecursoNaoEncontradoException("Receita", receita.getId());
         }
@@ -113,11 +63,11 @@ public class ReceitaService {
         receita.setCategoria(categoria);
 
         // ASSOCIAÇÃO SEGURA
-        receita.setUsuario(getUsuarioLogado());
+        receita.setUsuario(usuarioAutenticadoService.getUsuarioLogado());
 
         Receita savedReceita = receitaRepository.save(receita);
         log.info("Receita criada com sucesso. userId={}, receitaId={}", receita.getUsuario().getId(), savedReceita.getId());
-        return toResponseDTO(savedReceita);
+        return receitaMapper.toResponseDTO(savedReceita);
     }
 
     /**
@@ -130,14 +80,14 @@ public class ReceitaService {
             LocalDate dataFinal,
             Pageable pageable) {
 
-        String usuarioId = getUsuarioLogado().getId();
+        String usuarioId = usuarioAutenticadoService.getUsuarioLogado().getId();
 
         // **MUDANÇA CRUCIAL:** Novo método no Repository para aceitar os filtros
         Page<Receita> receitasPage = receitaRepository.buscarComFiltros(
                 usuarioId, categoriaId, dataInicial, dataFinal, pageable
         );
 
-        return receitasPage.map(this::toResponseDTO);
+        return receitasPage.map(receitaMapper::toResponseDTO);
     }
 
     /**
@@ -151,7 +101,7 @@ public class ReceitaService {
         // SEGURANÇA: Checa se o usuário logado é o proprietário
         verificarPropriedade(receita);
 
-        return toResponseDTO(receita);
+        return receitaMapper.toResponseDTO(receita);
     }
 
     /**
@@ -181,7 +131,7 @@ public class ReceitaService {
 
         Receita updatedReceita = receitaRepository.save(receita);
         log.info("Receita atualizada com sucesso. userId={}, receitaId={}", receita.getUsuario().getId(), updatedReceita.getId());
-        return toResponseDTO(updatedReceita);
+        return receitaMapper.toResponseDTO(updatedReceita);
     }
 
     /**
