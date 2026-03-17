@@ -1,85 +1,38 @@
 package com.scaglia.financeiro.service;
 
-import com.scaglia.financeiro.dto.CategoriaResponseDTO;
 import com.scaglia.financeiro.dto.ReceitaRequestDTO;
 import com.scaglia.financeiro.dto.ReceitaResponseDTO;
 import com.scaglia.financeiro.enums.TipoMovimentacao;
 import com.scaglia.financeiro.exception.RecursoNaoEncontradoException;
+import com.scaglia.financeiro.mapper.ReceitaMapper;
 import com.scaglia.financeiro.model.Categoria;
 import com.scaglia.financeiro.model.Receita;
-import com.scaglia.financeiro.model.User;
 import com.scaglia.financeiro.repository.CategoriaRepository;
 import com.scaglia.financeiro.repository.ReceitaRepository;
-import com.scaglia.financeiro.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReceitaService {
 
     private final ReceitaRepository receitaRepository;
     private final CategoriaRepository categoriaRepository;
-    private final UserRepository userRepository;
-
-    // --- Métodos de Suporte e Segurança ---
-
-    /**
-     * Obtém o objeto User completo a partir do contexto de segurança (token JWT).
-     * Garante que a transação será associada ao usuário correto.
-     */
-    // No ReceitaService.java
-    private User getUsuarioLogado() {
-        // Tenta obter o objeto User completo que foi colocado no contexto pelo SecurityFilter
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if (principal instanceof User) {
-            return (User) principal;
-        }
-
-        String emailUsuario = (String) principal;
-
-        return userRepository.findByEmail(emailUsuario)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + emailUsuario));
-    }
-
-    private CategoriaResponseDTO toCategoriaSimplesDTO(Categoria categoria) {
-        CategoriaResponseDTO dto = new CategoriaResponseDTO();
-        dto.setId(categoria.getId());
-        dto.setNome(categoria.getNome());
-        dto.setTipo(categoria.getTipo());
-        return dto;
-    }
-
-    /**
-     * Converte a Entidade Receita para o DTO de Resposta, incluindo o ID do usuário (String).
-     */
-    private ReceitaResponseDTO toResponseDTO(Receita receita) {
-        ReceitaResponseDTO dto = new ReceitaResponseDTO();
-        dto.setId(receita.getId());
-        dto.setDescricao(receita.getDescricao());
-        dto.setValor(receita.getValor());
-        dto.setData(receita.getData());
-        dto.setNatureza(receita.getNatureza());
-        dto.setCategoria(toCategoriaSimplesDTO(receita.getCategoria()));
-
-        // CORREÇÃO: Usando String para o ID do Usuário (UUID)
-        dto.setUsuarioId(receita.getUsuario().getId());
-
-        return dto;
-    }
+    private final UsuarioAutenticadoService usuarioAutenticadoService;
+    private final ReceitaMapper receitaMapper;
 
     /**
      * Verifica se a receita pertence ao usuário logado. Essencial para segurança.
      */
     private void verificarPropriedade(Receita receita) {
-        if (!receita.getUsuario().getId().equals(getUsuarioLogado().getId())) {
+        if (!receita.getUsuario().getId().equals(usuarioAutenticadoService.getUsuarioLogado().getId())) {
             // Retorna 404 para esconder a existência do recurso de um usuário não-proprietário.
             throw new RecursoNaoEncontradoException("Receita", receita.getId());
         }
@@ -91,6 +44,7 @@ public class ReceitaService {
     /**
      * 1. Cria uma nova Receita, validando a categoria e associando ao usuário logado.
      */
+    @Transactional
     public ReceitaResponseDTO criarReceita(ReceitaRequestDTO dto) {
 
         Categoria categoria = categoriaRepository.findById(dto.getCategoriaId())
@@ -109,34 +63,37 @@ public class ReceitaService {
         receita.setCategoria(categoria);
 
         // ASSOCIAÇÃO SEGURA
-        receita.setUsuario(getUsuarioLogado());
+        receita.setUsuario(usuarioAutenticadoService.getUsuarioLogado());
 
         Receita savedReceita = receitaRepository.save(receita);
-        return toResponseDTO(savedReceita);
+        log.info("Receita criada com sucesso. userId={}, receitaId={}", receita.getUsuario().getId(), savedReceita.getId());
+        return receitaMapper.toResponseDTO(savedReceita);
     }
 
     /**
      * 2. Listar Receitas do Usuário Logado com Filtros e Paginação.
      */
+    @Transactional(readOnly = true)
     public Page<ReceitaResponseDTO> listarReceitasUsuario(
             Long categoriaId,
             LocalDate dataInicial,
             LocalDate dataFinal,
             Pageable pageable) {
 
-        String usuarioId = getUsuarioLogado().getId();
+        String usuarioId = usuarioAutenticadoService.getUsuarioLogado().getId();
 
         // **MUDANÇA CRUCIAL:** Novo método no Repository para aceitar os filtros
         Page<Receita> receitasPage = receitaRepository.buscarComFiltros(
                 usuarioId, categoriaId, dataInicial, dataFinal, pageable
         );
 
-        return receitasPage.map(this::toResponseDTO);
+        return receitasPage.map(receitaMapper::toResponseDTO);
     }
 
     /**
      * 3. Busca Receita por ID e verifica a propriedade.
      */
+    @Transactional(readOnly = true)
     public ReceitaResponseDTO buscarPorId(Long id) {
         Receita receita = receitaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Receita", id));
@@ -144,12 +101,13 @@ public class ReceitaService {
         // SEGURANÇA: Checa se o usuário logado é o proprietário
         verificarPropriedade(receita);
 
-        return toResponseDTO(receita);
+        return receitaMapper.toResponseDTO(receita);
     }
 
     /**
      * 4. Atualiza uma Receita, verificando a propriedade e a categoria.
      */
+    @Transactional
     public ReceitaResponseDTO atualizarReceita(Long id, ReceitaRequestDTO dto) {
         Receita receita = receitaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Receita", id));
@@ -172,12 +130,14 @@ public class ReceitaService {
         receita.setCategoria(categoria);
 
         Receita updatedReceita = receitaRepository.save(receita);
-        return toResponseDTO(updatedReceita);
+        log.info("Receita atualizada com sucesso. userId={}, receitaId={}", receita.getUsuario().getId(), updatedReceita.getId());
+        return receitaMapper.toResponseDTO(updatedReceita);
     }
 
     /**
      * 5. Deleta uma Receita, verificando a propriedade.
      */
+    @Transactional
     public void deletarReceita(Long id) {
         Receita receita = receitaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Receita", id));
@@ -186,5 +146,6 @@ public class ReceitaService {
         verificarPropriedade(receita);
 
         receitaRepository.delete(receita);
+        log.info("Receita deletada com sucesso. userId={}, receitaId={}", receita.getUsuario().getId(), receita.getId());
     }
 }

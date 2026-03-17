@@ -1,8 +1,7 @@
 package com.scaglia.financeiro.controller;
 
+import com.scaglia.financeiro.dto.DespesaRequestDTO;
 import com.scaglia.financeiro.dto.DespesaResponseDTO;
-import com.scaglia.financeiro.dto.ReceitaRequestDTO;
-import com.scaglia.financeiro.dto.ReceitaResponseDTO;
 import com.scaglia.financeiro.service.DespesaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Tag(name = "Despesas", description = "Endpoints para gerenciamento das Despesas financeiras")
 @RestController
@@ -54,14 +52,14 @@ public class DespesaController {
 
     @Operation(summary = "Cria uma nova despesa")
     @PostMapping
-    public ResponseEntity<DespesaResponseDTO> criarDespesa(@Valid @RequestBody ReceitaRequestDTO dto) {
+    public ResponseEntity<DespesaResponseDTO> criarDespesa(@Valid @RequestBody DespesaRequestDTO dto) {
         DespesaResponseDTO novaDespesa = despesaService.criarDespesa(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(novaDespesa);
     }
 
     @Operation(summary = "Atualiza uma despesa existente")
     @PutMapping("/{id}")
-    public ResponseEntity<DespesaResponseDTO> atualizarDespesa(@PathVariable Long id, @Valid @RequestBody ReceitaRequestDTO dto) {
+    public ResponseEntity<DespesaResponseDTO> atualizarDespesa(@PathVariable Long id, @Valid @RequestBody DespesaRequestDTO dto) {
         DespesaResponseDTO despesaAtualizada = despesaService.atualizarDespesa(id, dto);
         return ResponseEntity.ok(despesaAtualizada);
     }

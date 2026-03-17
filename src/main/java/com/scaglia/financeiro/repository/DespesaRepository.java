@@ -27,11 +27,17 @@ public interface DespesaRepository extends JpaRepository<Despesa, Long> {
     @Query("SELECT d.categoria.nome, COALESCE(SUM(d.valor), 0) FROM Despesa d WHERE d.usuario.id = :usuarioId AND YEAR(d.data) = :ano AND MONTH(d.data) = :mes GROUP BY d.categoria.nome")
     List<Object[]> somarDespesasPorCategoria(String usuarioId, int mes, int ano);
 
-    // NOVO MÉTODO: Paginação e Filtros Dinâmicos
-    @Query("SELECT r FROM Despesa r WHERE r.usuario.id = :usuarioId " +
-            "AND (:categoriaId IS NULL OR r.categoria.id = :categoriaId) " +
-            "AND r.data >= COALESCE(:dataInicial, r.data) " +
-            "AND r.data <= COALESCE(:dataFinal, r.data) ")
+    // NOVO MÉTODO: Paginação e Filtros Dinâmicos (com JOIN FETCH para evitar N+1 na categoria)
+    @Query(
+            value = "SELECT d FROM Despesa d JOIN FETCH d.categoria WHERE d.usuario.id = :usuarioId " +
+                    "AND (:categoriaId IS NULL OR d.categoria.id = :categoriaId) " +
+                    "AND d.data >= COALESCE(:dataInicial, d.data) " +
+                    "AND d.data <= COALESCE(:dataFinal, d.data) ",
+            countQuery = "SELECT COUNT(d) FROM Despesa d WHERE d.usuario.id = :usuarioId " +
+                    "AND (:categoriaId IS NULL OR d.categoria.id = :categoriaId) " +
+                    "AND d.data >= COALESCE(:dataInicial, d.data) " +
+                    "AND d.data <= COALESCE(:dataFinal, d.data) "
+    )
     Page<Despesa> buscarComFiltros(
             String usuarioId,
             Long categoriaId,

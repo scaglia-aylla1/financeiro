@@ -28,11 +28,17 @@ public interface ReceitaRepository extends JpaRepository<Receita, Long> {
     @Query("SELECT r.categoria.nome, COALESCE(SUM(r.valor), 0) FROM Receita r WHERE r.usuario.id = :usuarioId AND YEAR(r.data) = :ano AND MONTH(r.data) = :mes GROUP BY r.categoria.nome")
     List<Object[]> somarReceitasPorCategoria(String usuarioId, int mes, int ano);
 
-    // NOVO MÉTODO: Paginação e Filtros Dinâmicos
-    @Query("SELECT r FROM Receita r WHERE r.usuario.id = :usuarioId " +
-            "AND (:categoriaId IS NULL OR r.categoria.id = :categoriaId) " +
-            "AND r.data >= COALESCE(:dataInicial, r.data) " +
-            "AND r.data <= COALESCE(:dataFinal, r.data) ")
+    // NOVO MÉTODO: Paginação e Filtros Dinâmicos (com JOIN FETCH para evitar N+1 na categoria)
+    @Query(
+            value = "SELECT r FROM Receita r JOIN FETCH r.categoria WHERE r.usuario.id = :usuarioId " +
+                    "AND (:categoriaId IS NULL OR r.categoria.id = :categoriaId) " +
+                    "AND r.data >= COALESCE(:dataInicial, r.data) " +
+                    "AND r.data <= COALESCE(:dataFinal, r.data) ",
+            countQuery = "SELECT COUNT(r) FROM Receita r WHERE r.usuario.id = :usuarioId " +
+                    "AND (:categoriaId IS NULL OR r.categoria.id = :categoriaId) " +
+                    "AND r.data >= COALESCE(:dataInicial, r.data) " +
+                    "AND r.data <= COALESCE(:dataFinal, r.data) "
+    )
     Page<Receita> buscarComFiltros(
             String usuarioId,
             Long categoriaId,
