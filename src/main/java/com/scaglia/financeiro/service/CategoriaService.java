@@ -3,6 +3,7 @@ package com.scaglia.financeiro.service;
 import com.scaglia.financeiro.dto.CategoriaRequestDTO;
 import com.scaglia.financeiro.dto.CategoriaResponseDTO;
 import com.scaglia.financeiro.exception.RecursoNaoEncontradoException;
+import com.scaglia.financeiro.mapper.CategoriaMapper;
 import com.scaglia.financeiro.model.Categoria;
 import com.scaglia.financeiro.repository.CategoriaRepository;
 import com.scaglia.financeiro.repository.DespesaRepository;
@@ -21,16 +22,7 @@ public class CategoriaService {
     private final CategoriaRepository categoriaRepository;
     private final ReceitaRepository receitaRepository;
     private final DespesaRepository despesaRepository;
-
-
-    // Converte Model para Response DTO
-    private CategoriaResponseDTO toResponseDTO(Categoria categoria) {
-        CategoriaResponseDTO dto = new CategoriaResponseDTO();
-        dto.setId(categoria.getId());
-        dto.setNome(categoria.getNome());
-        dto.setTipo(categoria.getTipo());
-        return dto;
-    }
+    private final CategoriaMapper categoriaMapper;
 
     // 1. Criar Categoria
     @Transactional
@@ -46,7 +38,7 @@ public class CategoriaService {
         categoria.setTipo(dto.getTipo());
 
         Categoria savedCategoria = categoriaRepository.save(categoria);
-        return toResponseDTO(savedCategoria);
+        return categoriaMapper.toResponseDTO(savedCategoria);
     }
 
     // 2. Buscar Categoria por ID
@@ -54,14 +46,14 @@ public class CategoriaService {
     public CategoriaResponseDTO buscarPorId(Long id) {
         Categoria categoria = categoriaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Categoria", id));
-        return toResponseDTO(categoria);
+        return categoriaMapper.toResponseDTO(categoria);
     }
 
     // 3. Listar Todas as Categorias
     @Transactional(readOnly = true)
     public List<CategoriaResponseDTO> listarTodas() {
         return categoriaRepository.findAll().stream()
-                .map(this::toResponseDTO)
+                .map(categoriaMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
@@ -80,7 +72,7 @@ public class CategoriaService {
         categoria.setTipo(dto.getTipo());
 
         Categoria updatedCategoria = categoriaRepository.save(categoria);
-        return toResponseDTO(updatedCategoria);
+        return categoriaMapper.toResponseDTO(updatedCategoria);
     }
 
     @Transactional
