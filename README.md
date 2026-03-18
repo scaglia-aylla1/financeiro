@@ -32,6 +32,17 @@ Auditoria Automática: Todas as entidades herdam de AbstractAuditEntity, registr
 Tratamento Global de Erros: Respostas padronizadas para exceções de validação, autenticação e recursos não encontrados.
 
 Padronização DTO: Uso de Java Records para objetos de transferência imutáveis e concisos.
+
+## 🗄️ Gerenciamento de Banco de Dados (Flyway)
+
+Este projeto utiliza o **Flyway** para garantir que a estrutura do banco de dados seja consistente em todos os ambientes (Desenvolvimento, Teste e Produção). 
+
+- **Versionamento:** Todas as alterações no schema (criação de tabelas, novos campos) são feitas via scripts SQL na pasta `src/main/resources/db/migration`.
+- **Integridade:** O Hibernate está configurado com `ddl-auto=validate`, garantindo que o código Java esteja sempre em sincronia com as tabelas reais.
+
+**Scripts Atuais:**
+- `V1`: Criação do schema inicial (Usuários, Categorias, Receitas).
+- `V2`: Adição do campo `observacao` na tabela de receitas para suporte a textos longos.
 ## Como Rodar
 ### Pré-requisitos
 
@@ -48,7 +59,7 @@ Padronização DTO: Uso de Java Records para objetos de transferência imutávei
 
 2. Ajuste usuário/senha em `src/main/resources/application.properties` se necessário (padrão: `postgres` / `123456`).
 
-3. Execute:
+3. Execute a aplicação:
    ```bash
    mvn spring-boot:run
    ```
