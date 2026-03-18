@@ -1,0 +1,46 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      # Sobe o Postgres para os testes de integração (Flyway + JPA)
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: financeiro
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123456
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build and Run Tests
+      env:
+        # Variáveis para o Spring se conectar ao Postgres do Service acima
+        SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/financeiro
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: 123456
+        API_SECURITY_TOKEN_SECRET: ${{ secrets.API_SECURITY_TOKEN_SECRET || 'test-secret-key' }}
+      run: mvn -B clean verify
