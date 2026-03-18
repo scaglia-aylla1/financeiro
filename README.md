@@ -1,3 +1,5 @@
+![Java CI with Maven](https://github.com/scaglia-aylla1/financeiro/actions/workflows/ci.yml/badge.svg)
+
 # Sistema Financeiro Pessoal
 
 API REST para controle de receitas e despesas, com autenticação JWT, categorias e relatório de balanço mensal.
