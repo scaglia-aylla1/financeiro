@@ -54,5 +54,10 @@ public class Receita extends AbstractAuditEntity {
     @JoinColumn(name = "usuario_id", referencedColumnName = "id", nullable = false)
     private User usuario;
 
+    @Column(name = "observacao", columnDefinition = "TEXT")
+    private String observacao;
+    
+
+
 
 }
