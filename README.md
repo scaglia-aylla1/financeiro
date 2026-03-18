@@ -12,6 +12,7 @@ API REST para controle de receitas e despesas, com autenticação JWT, categoria
 - **SpringDoc OpenAPI** (Swagger) 
 - **Lombok** 
 - **JWT (Auth0)**
+- **Docker**
 
 ## 🧪 Estratégia de Testes (Qualidade & Segurança)
 O projeto segue as melhores práticas de engenharia de software, garantindo que a lógica de negócio e a segurança estejam protegidas contra regressões.
@@ -43,36 +44,45 @@ Este projeto utiliza o **Flyway** para garantir que a estrutura do banco de dado
 **Scripts Atuais:**
 - `V1`: Criação do schema inicial (Usuários, Categorias, Receitas).
 - `V2`: Adição do campo `observacao` na tabela de receitas para suporte a textos longos.
-## Como Rodar
-### Pré-requisitos
+## 🚀 Como Executar o Projeto
 
-- JDK 21
-- Maven
-- PostgreSQL (ou altere `application.properties` para H2/MySQL)
+Você tem duas formas de rodar a aplicação: utilizando o Docker (recomendado) ou localmente com Maven.
 
-### Passos
+### 1. Via Docker (Recomendado)
+Certifique-se de ter o **Docker** e o **Docker Compose** instalados. Na raiz do projeto, execute:
 
-1. Crie o banco no PostgreSQL:
-   ```sql
-   CREATE DATABASE financeiro;
-   ```
+```bash
+docker-compose up --build
+```
+Este comando irá baixar a imagem do PostgreSQL, compilar o Java, rodar as migrations do Flyway e subir a API em http://localhost:8080 automaticamente.
 
-2. Ajuste usuário/senha em `src/main/resources/application.properties` se necessário (padrão: `postgres` / `123456`).
+### 2. Via Maven (Local)
+Caso prefira rodar sem Docker, você precisará de um banco PostgreSQL rodando localmente.
 
-3. Execute a aplicação:
-   ```bash
-   mvn spring-boot:run
-   ```
+1- Configure as variáveis de ambiente no seu application.properties ou no sistema.
 
-4. Acesse:
-   - **API**: http://localhost:8080  
-   - **Swagger**: http://localhost:8080/swagger-ui.html  
+2- Instale as dependências e compile:
 
-### Autenticação
+```Bash
+mvn clean install
+```
+3- Execute a aplicação:
 
-- **Registro**: `POST /api/v1/auth/register` com `name`, `email`, `password`
-- **Login**: `POST /api/v1/auth/login` com `email`, `password`
-- Use o `token` retornado no header: `Authorization: Bearer <token>`
+```Bash
+mvn spring-boot:run
+```
+
+
+## 🛠️ Variáveis de Ambiente
+
+A aplicação utiliza as seguintes variáveis para configuração (configuradas automaticamente no Docker Compose):
+
+| Variável | Descrição | Valor Padrão |
+|----------|-----------|--------------|
+| `SPRING_DATASOURCE_URL` | URL de conexão com o Banco | `jdbc:postgresql://localhost:5432/financeiro` |
+| `SPRING_DATASOURCE_USERNAME` | Usuário do Banco | `postgres` |
+| `SPRING_DATASOURCE_PASSWORD` | Senha do Banco | `123456` |
+| `API_SECURITY_TOKEN_SECRET` | Chave secreta para o JWT | `secret-default` |
 
 ## Endpoints principais
 
