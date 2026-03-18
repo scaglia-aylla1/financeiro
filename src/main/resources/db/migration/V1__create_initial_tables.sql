@@ -41,4 +41,3 @@ CREATE TABLE receitas (
     CONSTRAINT fk_receitas_categoria FOREIGN KEY (categoria_id) REFERENCES categorias(id),
     CONSTRAINT fk_receitas_usuario FOREIGN KEY (usuario_id) REFERENCES tb_users(id)
 );
- Adicione as outras tabelas e as Foreign Keys aqui
