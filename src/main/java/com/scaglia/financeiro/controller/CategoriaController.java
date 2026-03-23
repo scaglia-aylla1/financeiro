@@ -1,5 +1,6 @@
 package com.scaglia.financeiro.controller;
 
+import com.scaglia.financeiro.dto.ApiResponse; // Importe o seu novo DTO
 import com.scaglia.financeiro.dto.CategoriaRequestDTO;
 import com.scaglia.financeiro.dto.CategoriaResponseDTO;
 import com.scaglia.financeiro.service.CategoriaService;
@@ -23,36 +24,40 @@ public class CategoriaController {
 
     @Operation(summary = "Lista todas as categorias (Receita/Despesa)")
     @GetMapping
-    public ResponseEntity<List<CategoriaResponseDTO>> listarCategorias() {
+    public ResponseEntity<ApiResponse<List<CategoriaResponseDTO>>> listarCategorias() {
         List<CategoriaResponseDTO> categorias = categoriaService.listarTodas();
-        return ResponseEntity.ok(categorias);
+        return ResponseEntity.ok(new ApiResponse<>(categorias, "Categorias listadas com sucesso."));
     }
 
     @Operation(summary = "Busca uma categoria por ID")
     @GetMapping("/{id}")
-    public ResponseEntity<CategoriaResponseDTO> buscarCategoria(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<CategoriaResponseDTO>> buscarCategoria(@PathVariable Long id) {
         CategoriaResponseDTO categoria = categoriaService.buscarPorId(id);
-        return ResponseEntity.ok(categoria);
+        return ResponseEntity.ok(new ApiResponse<>(categoria, "Categoria encontrada."));
     }
 
     @Operation(summary = "Cria uma nova categoria")
     @PostMapping
-    public ResponseEntity<CategoriaResponseDTO> criarCategoria(@Valid @RequestBody CategoriaRequestDTO dto) {
+    public ResponseEntity<ApiResponse<CategoriaResponseDTO>> criarCategoria(@Valid @RequestBody CategoriaRequestDTO dto) {
         CategoriaResponseDTO novaCategoria = categoriaService.criarCategoria(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(novaCategoria);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(novaCategoria, "Categoria criada com sucesso."));
     }
 
     @Operation(summary = "Atualiza uma categoria existente")
     @PutMapping("/{id}")
-    public ResponseEntity<CategoriaResponseDTO> atualizarCategoria(@PathVariable Long id, @Valid @RequestBody CategoriaRequestDTO dto) {
+    public ResponseEntity<ApiResponse<CategoriaResponseDTO>> atualizarCategoria(@PathVariable Long id, @Valid @RequestBody CategoriaRequestDTO dto) {
         CategoriaResponseDTO categoriaAtualizada = categoriaService.atualizarCategoria(id, dto);
-        return ResponseEntity.ok(categoriaAtualizada);
+        return ResponseEntity.ok(new ApiResponse<>(categoriaAtualizada, "Categoria atualizada com sucesso."));
     }
 
     @Operation(summary = "Deleta uma categoria por ID")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarCategoria(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deletarCategoria(@PathVariable Long id) {
         categoriaService.deletarCategoria(id);
-        return ResponseEntity.noContent().build();
+        // Em exclusão, você pode retornar 204 (NoContent) sem corpo, 
+        // OU retornar 200 com uma mensagem confirmando a deleção.
+        // Para seguir o padrão de "Envelope", vamos de 200 OK:
+        return ResponseEntity.ok(new ApiResponse<>(null, "Categoria excluída com sucesso."));
     }
 }

@@ -1,5 +1,6 @@
 package com.scaglia.financeiro.controller;
 
+import com.scaglia.financeiro.dto.ApiResponse;
 import com.scaglia.financeiro.dto.LoginRequestDto;
 import com.scaglia.financeiro.dto.RegisterRequestDto;
 import com.scaglia.financeiro.dto.ResponseDto;
@@ -22,14 +23,19 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<ResponseDto> login(@RequestBody @jakarta.validation.Valid LoginRequestDto body) {
+    public ResponseEntity<ApiResponse<ResponseDto>> login(@RequestBody @jakarta.validation.Valid LoginRequestDto body) {
         ResponseDto response = authService.login(body);
-        return ResponseEntity.ok(response);
+        
+        // Retorna 200 OK com o envelope
+        return ResponseEntity.ok(new ApiResponse<>(response, "Login realizado com sucesso."));
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ResponseDto> register(@RequestBody @jakarta.validation.Valid RegisterRequestDto body) {
+    public ResponseEntity<ApiResponse<ResponseDto>> register(@RequestBody @jakarta.validation.Valid RegisterRequestDto body) {
         ResponseDto response = authService.register(body);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        
+        // Retorna 201 Created com o envelope
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(response, "Usuário registrado com sucesso."));
     }
 }
