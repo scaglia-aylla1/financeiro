@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.scaglia.financeiro.model.User;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,23 +19,33 @@ public class TokenService {
     @Value("${api.security.token.secret}")
     private String secret;
 
+    // Garante que a aplicação não suba sem uma secret configurada adequadamente
+    @PostConstruct
+    public void validateSecret() {
+        if (secret == null || secret.trim().isEmpty() || secret.equals("minha-chave-secreta-padrao-para-dev")) {
+            System.err.println("AVISO: A chave secreta JWT não foi configurada corretamente em variáveis de ambiente!");
+        }
+    }
+
     public String generateToken(User user) {
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
 
-            String token = JWT.create()
+            return JWT.create()
                     .withIssuer("financeiro")
                     .withSubject(user.getEmail())
+                    // Dica: Adicione o ID do usuário como uma Claim extra para facilitar buscas no banco depois
+                    .withClaim("id", user.getId()) 
                     .withExpiresAt(this.generateExpirationDate())
                     .sign(algorithm);
-            return token;
 
         } catch (JWTCreationException exception) {
-            throw new IllegalStateException("Erro ao gerar token JWT", exception);
+            throw new RuntimeException("Erro ao gerar token JWT", exception);
         }
     }
-    public String validateToken(String token){
-        try{
+
+    public String validateToken(String token) {
+        try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.require(algorithm)
                     .withIssuer("financeiro")
@@ -43,11 +54,13 @@ public class TokenService {
                     .getSubject();
 
         } catch (JWTVerificationException exception) {
-            return null;
+            // Em vez de apenas null, você poderia logar: "Token inválido ou expirado"
+            return ""; 
         }
     }
 
-    private Instant generateExpirationDate(){
+    private Instant generateExpirationDate() {
+        // -03:00 é o padrão de Brasília. Perfeito.
         return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
     }
 }

@@ -73,18 +73,14 @@ mvn clean install
 ```Bash
 mvn spring-boot:run
 ```
+## 🔐 Configuração de Segurança
+O projeto utiliza variáveis de ambiente para gerenciar credenciais sensíveis.
 
+*  Renomeie o arquivo .env.example para .env.
 
-## 🛠️ Variáveis de Ambiente
+* Preencha com suas configurações locais.
 
-A aplicação utiliza as seguintes variáveis para configuração (configuradas automaticamente no Docker Compose):
-
-| Variável | Descrição | Valor Padrão |
-|----------|-----------|--------------|
-| `SPRING_DATASOURCE_URL` | URL de conexão com o Banco | `jdbc:postgresql://localhost:5432/financeiro` |
-| `SPRING_DATASOURCE_USERNAME` | Usuário do Banco | `postgres` |
-| `SPRING_DATASOURCE_PASSWORD` | Senha do Banco | `123456` |
-| `API_SECURITY_TOKEN_SECRET` | Chave secreta para o JWT | `secret-default` |
+* O Spring Boot carregará essas configurações automaticamente via sistema/IDE.
 
 ## Endpoints principais
 
