@@ -37,22 +37,24 @@ class AuthControllerTest {
     private AuthService authService; // "Mocamos" o service para focar no Controller
 
     @Test
-    void login_DeveRetornar200_QuandoCredenciaisForemValidas() throws Exception {
-        // GIVEN
-        LoginRequestDto loginRequest = new LoginRequestDto("usuario@email.com", "senha123");
-        ResponseDto responseFake = new ResponseDto("nomeUsuario", "token-jwt-gerado-aqui");
+void login_DeveRetornar200_QuandoCredenciaisForemValidas() throws Exception {
+    // GIVEN
+    LoginRequestDto loginRequest = new LoginRequestDto("usuario@email.com", "senha123");
+    ResponseDto responseFake = new ResponseDto("nomeUsuario", "token-jwt-gerado-aqui");
 
-        // Ensinamos o service a retornar o DTO fake
-        when(authService.login(any(LoginRequestDto.class))).thenReturn(responseFake);
+    when(authService.login(any(LoginRequestDto.class))).thenReturn(responseFake);
 
-        // WHEN & THEN
-        mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON) // Dizemos que estamos enviando JSON
-                .content(objectMapper.writeValueAsString(loginRequest))) // Converte objeto para JSON string
-                .andExpect(status().isOk()) // Espera HTTP 200
-                .andExpect(jsonPath("$.token").value("token-jwt-gerado-aqui")) // Verifica se o token está no JSON
-                .andExpect(jsonPath("$.name").value("nomeUsuario"));
-    }
+    // WHEN & THEN
+    mockMvc.perform(post("/api/v1/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(loginRequest)))
+            .andExpect(status().isOk()) 
+            // AJUSTE AQUI: Caminho agora é $.data.campo
+            .andExpect(jsonPath("$.data.token").value("token-jwt-gerado-aqui")) 
+            .andExpect(jsonPath("$.data.name").value("nomeUsuario"))
+            // OPCIONAL: Validar a mensagem de sucesso que definimos no Controller
+            .andExpect(jsonPath("$.message").value("Login realizado com sucesso."));
+}
 
     @Test
 void login_DeveRetornar400EDetalhesDoErro_QuandoEmailForInvalido() throws Exception {
