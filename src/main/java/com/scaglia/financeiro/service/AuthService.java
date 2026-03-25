@@ -32,8 +32,11 @@ public class AuthService {
             throw new BadCredentialsException("Credenciais inválidas.");
         }
 
-        String token = tokenService.generateToken(user);
-        return new ResponseDto(user.getName(), token);
+        String accessToken = tokenService.generateToken(user);
+        String refreshToken = tokenService.generateRefreshToken(user);
+    
+        // Retorna os TRÊS argumentos exigidos pelo record
+        return new ResponseDto(user.getName(), accessToken, refreshToken);
     }
 
     public ResponseDto register(RegisterRequestDto body) {
@@ -47,7 +50,29 @@ public class AuthService {
         newUser.setName(body.name());
         userRepository.save(newUser);
 
-        String token = tokenService.generateToken(newUser);
-        return new ResponseDto(newUser.getName(), token);
+        String accessToken = tokenService.generateToken(newUser);
+        String refreshToken = tokenService.generateRefreshToken(newUser);
+        
+        return new ResponseDto(newUser.getName(), accessToken, refreshToken);
+    }
+
+    public ResponseDto regerarTokens(String refreshToken) {
+        // 1. Valida o refresh token (extrai o email)
+        String email = tokenService.validateToken(refreshToken);
+        
+        if (email.isEmpty()) {
+            throw new RuntimeException("Refresh token inválido ou expirado.");
+        }
+    
+        // 2. Busca o usuário no banco
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+    
+        // 3. Gera um NOVO par de tokens (Access e Refresh)
+        // Isso é chamado de "Refresh Token Rotation", o que é bem seguro!
+        String newAccessToken = tokenService.generateToken(user);
+        String newRefreshToken = tokenService.generateRefreshToken(user);
+    
+        return new ResponseDto(user.getName(), newAccessToken, newRefreshToken);
     }
 }

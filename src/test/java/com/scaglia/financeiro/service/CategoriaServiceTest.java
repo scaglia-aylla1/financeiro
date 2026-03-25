@@ -39,7 +39,7 @@ class CategoriaServiceTest {
     private CategoriaService service;
 
     @Test
-void criarCategoria_DeveRetornarSucesso_QuandoNomeNaoExiste() {
+    void criarCategoria_DeveRetornarSucesso_QuandoNomeNaoExiste() {
     // 1. GIVEN - O erro deve estar aqui: o DTO precisa ter o nome!
     CategoriaRequestDTO request = new CategoriaRequestDTO();
     request.setNome("Alimentação"); // CERTIFIQUE-SE DE SETAR O NOME AQUI
@@ -61,22 +61,22 @@ void criarCategoria_DeveRetornarSucesso_QuandoNomeNaoExiste() {
     assertNotNull(resultado);
     assertEquals("Alimentação", resultado.getNome());
 }
-@Test
-void criarCategoria_DeveLancarExcecao_QuandoNomeJaExiste() {
-    // 1. GIVEN
-    CategoriaRequestDTO request = new CategoriaRequestDTO();
-    request.setNome("Lazer"); // VOCÊ PRECISA DESTA LINHA!
-    // request.setTipo(TipoMovimentacao.DESPESA); // Opcional para este teste, mas bom ter
+    @Test
+    void criarCategoria_DeveLancarExcecao_QuandoNomeJaExiste() {
+        // 1. GIVEN
+        CategoriaRequestDTO request = new CategoriaRequestDTO();
+        request.setNome("Lazer"); // VOCÊ PRECISA DESTA LINHA!
+        // request.setTipo(TipoMovimentacao.DESPESA); // Opcional para este teste, mas bom ter
 
-    // Agora o Mockito vai reconhecer o "Lazer" vindo do service
-    when(categoriaRepository.existsByNomeIgnoreCase("Lazer")).thenReturn(true);
+        // Agora o Mockito vai reconhecer o "Lazer" vindo do service
+        when(categoriaRepository.existsByNomeIgnoreCase("Lazer")).thenReturn(true);
 
-    // 2. WHEN & THEN
-    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-        service.criarCategoria(request);
-    });
+        // 2. WHEN & THEN
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.criarCategoria(request);
+        });
 
-    assertEquals("Já existe uma categoria com o nome 'Lazer'.", exception.getMessage());
-    verify(categoriaRepository, never()).save(any());
-}
+        assertEquals("Já existe uma categoria com o nome 'Lazer'.", exception.getMessage());
+        verify(categoriaRepository, never()).save(any());
+    }
 }
