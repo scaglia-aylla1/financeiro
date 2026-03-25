@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scaglia.financeiro.dto.LoginRequestDto;
+import com.scaglia.financeiro.dto.RefreshTokenRequestDto;
 import com.scaglia.financeiro.dto.ResponseDto;
 import com.scaglia.financeiro.service.AuthService;
 
@@ -37,27 +38,51 @@ class AuthControllerTest {
     private AuthService authService; // "Mocamos" o service para focar no Controller
 
     @Test
-void login_DeveRetornar200_QuandoCredenciaisForemValidas() throws Exception {
-    // GIVEN
-    LoginRequestDto loginRequest = new LoginRequestDto("usuario@email.com", "senha123");
-    ResponseDto responseFake = new ResponseDto("nomeUsuario", "token-jwt-gerado-aqui");
+    void login_DeveRetornar200_QuandoCredenciaisForemValidas() throws Exception {
+        // GIVEN
+        LoginRequestDto loginRequest = new LoginRequestDto("usuario@email.com", "senha123");
+        
+        // AJUSTE: Adicionado o terceiro parâmetro (refresh token) para bater com o novo ResponseDto
+        ResponseDto responseFake = new ResponseDto(
+                "nomeUsuario", 
+                "access-token-fake", 
+                "refresh-token-fake"
+        );
 
-    when(authService.login(any(LoginRequestDto.class))).thenReturn(responseFake);
+        when(authService.login(any(LoginRequestDto.class))).thenReturn(responseFake);
 
-    // WHEN & THEN
-    mockMvc.perform(post("/api/v1/auth/login")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(loginRequest)))
-            .andExpect(status().isOk()) 
-            // AJUSTE AQUI: Caminho agora é $.data.campo
-            .andExpect(jsonPath("$.data.token").value("token-jwt-gerado-aqui")) 
-            .andExpect(jsonPath("$.data.name").value("nomeUsuario"))
-            // OPCIONAL: Validar a mensagem de sucesso que definimos no Controller
-            .andExpect(jsonPath("$.message").value("Login realizado com sucesso."));
-}
+        // WHEN & THEN
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk()) 
+                // AJUSTE: Nomes dos campos devem bater com o seu Record ResponseDto
+                .andExpect(jsonPath("$.data.accessToken").value("access-token-fake")) 
+                .andExpect(jsonPath("$.data.refreshToken").value("refresh-token-fake"))
+                .andExpect(jsonPath("$.data.name").value("nomeUsuario"))
+                .andExpect(jsonPath("$.message").value("Login realizado com sucesso."));
+    }
 
     @Test
-void login_DeveRetornar400EDetalhesDoErro_QuandoEmailForInvalido() throws Exception {
+    void refresh_DeveRetornarNovosTokens_QuandoRefreshTokenForValido() throws Exception {
+        // GIVEN
+        RefreshTokenRequestDto refreshRequest = new RefreshTokenRequestDto("refresh-valido");
+        ResponseDto novosTokens = new ResponseDto("nomeUsuario", "novo-access", "novo-refresh");
+
+        when(authService.regerarTokens("refresh-valido")).thenReturn(novosTokens);
+
+        // WHEN & THEN
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.accessToken").value("novo-access"))
+                .andExpect(jsonPath("$.data.refreshToken").value("novo-refresh"))
+                .andExpect(jsonPath("$.message").value("Token renovado com sucesso."));
+    }
+
+    @Test
+    void login_DeveRetornar400EDetalhesDoErro_QuandoEmailForInvalido() throws Exception {
     // GIVEN: Email com formato errado e senha vazia
     LoginRequestDto loginInvalido = new LoginRequestDto("email-errado", ""); 
 
