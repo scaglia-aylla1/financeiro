@@ -73,6 +73,10 @@ mvn clean install
 ```Bash
 mvn spring-boot:run
 ```
+## 🚀 Testando a API:
+
+Importe a coleção disponível em docs/postman/collection.json no seu Postman para testar todos os endpoints rapidamente.
+
 ## 🔐 Configuração de Segurança
 O projeto utiliza variáveis de ambiente para gerenciar credenciais sensíveis.
 

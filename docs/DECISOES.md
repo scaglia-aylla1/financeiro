@@ -66,3 +66,7 @@ Este documento registra as decisões técnicas fundamentais tomadas durante o de
 **Decisão:** Configuração de **GitHub Actions** para executar automaticamente o build e os testes (`mvn test`) em cada *Push* ou *Pull Request*.
 
 **Justificativa:** Fornece feedback imediato sobre a qualidade do código e garante que a branch `main` esteja sempre em um estado estável e pronto para deploy.
+
+## 8. Documentação de API com Postman
+**Decisão:** Disponibilização de coleção JSON com scripts de automação.
+[cite_start]**Justificativa:** Facilita o teste manual e garante que o contrato da API com o envelope `data` seja validado rapidamente por qualquer pessoa interessada no projeto[cite: 43, 44].
