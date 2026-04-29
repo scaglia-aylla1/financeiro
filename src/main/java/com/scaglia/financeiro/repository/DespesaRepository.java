@@ -1,6 +1,7 @@
 package com.scaglia.financeiro.repository;
 
 import com.scaglia.financeiro.model.Despesa;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,7 @@ public interface DespesaRepository extends JpaRepository<Despesa, Long> {
     // Método customizado para a lógica de deleção da Categoria
     boolean existsByCategoriaId(Long categoriaId);
 
+    @EntityGraph(attributePaths = "categoria")
     Page<Despesa> findAllByUsuarioId(String usuarioId, Pageable pageable);
 
     // Consulta para somar todas as despesas de um usuário em um determinado mês/ano
