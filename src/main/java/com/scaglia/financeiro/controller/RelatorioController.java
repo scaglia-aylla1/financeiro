@@ -2,6 +2,8 @@ package com.scaglia.financeiro.controller;
 
 import com.scaglia.financeiro.dto.ApiResponse; // Importando o envelope
 import com.scaglia.financeiro.dto.BalancoResponseDTO;
+import com.scaglia.financeiro.dto.LancamentoResumoResponseDTO;
+import com.scaglia.financeiro.service.LancamentoDashboardService;
 import com.scaglia.financeiro.service.RelatorioService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Tag(name = "Relatórios e Dashboard", description = "Endpoints para consulta do Balanço e Resumo Financeiro")
 @RestController
@@ -18,6 +21,7 @@ import java.time.LocalDate;
 public class RelatorioController {
 
     private final RelatorioService relatorioService;
+    private final LancamentoDashboardService lancamentoDashboardService;
 
     @Operation(summary = "Calcula o balanço total (Receitas - Despesas) para um mês e ano específicos.")
     @GetMapping("/balanco/{ano}/{mes}")
@@ -46,5 +50,13 @@ public class RelatorioController {
         );
         
         return ResponseEntity.ok(new ApiResponse<>(balanco, "Balanço do mês atual carregado."));
+    }
+
+    @Operation(summary = "Lista os lançamentos mais recentes para o dashboard inicial.")
+    @GetMapping("/lancamentos/recentes")
+    public ResponseEntity<ApiResponse<List<LancamentoResumoResponseDTO>>> obterLancamentosRecentes(
+            @RequestParam(required = false) Integer limit) {
+        List<LancamentoResumoResponseDTO> lancamentos = lancamentoDashboardService.listarLancamentosRecentes(limit);
+        return ResponseEntity.ok(new ApiResponse<>(lancamentos, "Lançamentos recentes carregados."));
     }
 }
