@@ -36,8 +36,7 @@ public class TokenService {
                     .verify(token)
                     .getSubject();
         } catch (JWTVerificationException exception) {
-            // Em vez de apenas null, você poderia logar: "Token inválido ou expirado"
-            return "";
+            return null;
         }
     }
     public String generateToken(User user) {
