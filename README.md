@@ -1,12 +1,10 @@
-![Java CI with Maven](https://github.com/scaglia-aylla1/financeiro/actions/workflows/ci.yml/badge.svg)
-
 # 💰 Sistema de Controle Financeiro Pessoal
 
-API REST desenvolvida com **Java e Spring Boot** para gerenciamento de finanças pessoais.
+API REST para gerenciamento de finanças pessoais desenvolvida com **Java 21 e Spring Boot**.
 
-O projeto permite que usuários autenticados gerenciem suas receitas, despesas e categorias, mantendo os dados financeiros isolados por usuário.
+O sistema permite que usuários autenticados gerenciem receitas, despesas e categorias, acompanhem informações financeiras e mantenham seus dados isolados de outros usuários.
 
-Além das funcionalidades da aplicação, o projeto foi desenvolvido como parte do meu portfólio para colocar em prática conceitos de **desenvolvimento backend, segurança, persistência de dados, testes automatizados, migrations, documentação de APIs e containerização**.
+O projeto foi desenvolvido como parte do meu portfólio para colocar em prática conceitos de **desenvolvimento backend, segurança, persistência de dados, testes automatizados, migrations, documentação de APIs, Docker e integração contínua**.
 
 ---
 
@@ -24,60 +22,67 @@ Além das funcionalidades da aplicação, o projeto foi desenvolvido como parte 
 
 ### Banco de dados
 
-- PostgreSQL
+- PostgreSQL 15
 - Flyway
-- H2 para testes
 
 ### Segurança
 
-- JWT (JSON Web Token)
+- Spring Security
+- JWT
 - Access Token e Refresh Token
-- Autenticação e autorização com Spring Security
-- Proteção dos recursos por usuário
+- Rotação de tokens
+- Autenticação e autorização
+- Proteção de recursos por usuário
 
 ### Testes
 
 - JUnit 5
 - Mockito
 - MockMvc
-- `@DataJpaTest`
+- Spring Boot Test
+- Testes da camada de persistência
 
 ### Documentação e infraestrutura
 
 - Swagger / OpenAPI
 - Docker
+- Docker Compose
 - GitHub Actions
 
 ---
 
 ## 📌 Funcionalidades
 
-A API possui funcionalidades para gerenciamento financeiro individual, incluindo:
+Entre as principais funcionalidades da aplicação estão:
 
 - cadastro e autenticação de usuários;
 - geração de Access Token e Refresh Token;
+- renovação e rotação de tokens;
 - gerenciamento de receitas;
 - gerenciamento de despesas;
 - gerenciamento de categorias;
-- consulta de dados financeiros;
+- consulta de lançamentos financeiros;
+- consulta de lançamentos recentes para o dashboard;
 - filtros e paginação;
-- cálculo e consulta de balanços financeiros;
-- validação dos dados de entrada;
+- cálculo e consulta de informações financeiras;
+- validação dos dados recebidos pela API;
 - tratamento global de exceções;
 - auditoria de entidades;
-- isolamento dos dados entre usuários.
+- isolamento dos dados financeiros por usuário.
 
 ---
 
-## 🔐 Segurança
+## 🔐 Autenticação e segurança
 
-A autenticação da aplicação é baseada em **JWT** utilizando Spring Security.
+A autenticação da aplicação é implementada com **Spring Security e JWT**.
 
 Após realizar o login, o usuário recebe tokens utilizados para acessar os endpoints protegidos da API.
 
-Além da autenticação, a aplicação aplica autorização sobre os recursos para garantir que cada usuário tenha acesso apenas aos próprios dados.
+O projeto utiliza **Access Token e Refresh Token**, permitindo a renovação da autenticação sem exigir um novo login enquanto o refresh token permanecer válido.
 
-Essa validação também protege a aplicação contra cenários de **IDOR (Insecure Direct Object Reference)**, nos quais um usuário poderia tentar acessar ou alterar um recurso pertencente a outro usuário apenas modificando seu identificador na requisição.
+Além da autenticação, a aplicação verifica a propriedade dos recursos acessados para garantir que cada usuário tenha acesso apenas aos próprios dados.
+
+Essa validação também ajuda a evitar cenários de **IDOR (Insecure Direct Object Reference)**, nos quais um usuário autenticado tenta acessar ou modificar recursos pertencentes a outro usuário através da alteração de identificadores enviados à API.
 
 ---
 
@@ -100,7 +105,19 @@ src/main/java/.../
 └── FinanceiroApplication.java
 ```
 
-De forma simplificada, o fluxo de uma requisição segue:
+### Responsabilidades
+
+- **config** — configurações da aplicação, incluindo segurança e CORS;
+- **controller** — endpoints REST e tratamento das requisições HTTP;
+- **dto** — objetos utilizados na entrada e saída de dados;
+- **enums** — valores enumerados utilizados pelo domínio;
+- **exception** — exceções e tratamento centralizado de erros;
+- **mapper** — conversão entre entidades e DTOs;
+- **model** — entidades e modelos da aplicação;
+- **repository** — acesso e persistência dos dados;
+- **service** — regras de negócio e coordenação das operações.
+
+De forma simplificada, o fluxo principal segue:
 
 ```text
 Cliente
@@ -111,96 +128,104 @@ Service
    ↓
 Repository
    ↓
-Banco de Dados
+PostgreSQL
 ```
 
-### Controller
-
-Responsável por receber as requisições HTTP, validar os dados de entrada e retornar as respostas da API.
-
-### Service
-
-Concentra as regras de negócio da aplicação e coordena as operações necessárias para cada caso de uso.
-
-### Repository
-
-Responsável pelo acesso e persistência dos dados utilizando Spring Data JPA.
-
-### DTOs
-
-Utilizados para controlar os dados recebidos e retornados pela API, evitando expor diretamente as entidades de persistência.
+DTOs e mappers são utilizados para separar a representação externa da API das entidades utilizadas na persistência.
 
 ---
 
 ## 🗄️ Persistência de dados
 
-A persistência é realizada com:
+A persistência da aplicação utiliza:
 
 - PostgreSQL;
 - Spring Data JPA;
 - Hibernate.
 
-As alterações na estrutura do banco de dados são versionadas utilizando **Flyway**, permitindo que a evolução do schema seja controlada junto com o código da aplicação.
+As alterações na estrutura do banco são versionadas com **Flyway**, mantendo as migrations junto ao código da aplicação.
 
 ---
 
-## 🧪 Testes
+## 🧪 Testes automatizados
 
-O projeto possui testes automatizados em diferentes partes da aplicação.
+O projeto possui testes automatizados para validar diferentes comportamentos da aplicação.
 
-Foram utilizados:
+São utilizados:
 
 - **JUnit 5** para estruturação dos testes;
 - **Mockito** para testes unitários e isolamento de dependências;
-- **H2** para cenários de integração com banco de dados;
-- **`@DataJpaTest`** para validação da camada de persistência;
-- **MockMvc** para testes dos endpoints da API.
+- **MockMvc** para testes de endpoints;
+- recursos de teste do Spring para validação da integração entre componentes;
+- testes da camada de persistência.
 
-Os testes ajudam a validar regras de negócio, persistência, segurança e comportamento dos endpoints.
+Além da execução local, a suíte de testes faz parte da pipeline de integração contínua.
 
 ---
 
 ## ⚠️ Tratamento de erros
 
-A aplicação possui tratamento global de exceções para padronizar as respostas de erro da API.
+A aplicação possui tratamento centralizado de exceções para manter as respostas de erro da API consistentes.
 
 Entre os cenários tratados estão:
 
 - dados inválidos;
 - recursos não encontrados;
 - erros de autenticação;
-- acesso não autorizado;
+- tentativas de acesso não autorizado;
 - violações de regras da aplicação.
 
-Isso evita que cada controller precise implementar seu próprio tratamento de erro.
+Essa abordagem evita duplicação do tratamento de erros nos controllers e mantém um padrão de resposta para os consumidores da API.
 
 ---
 
 ## 📖 Documentação da API
 
-A API é documentada utilizando **Swagger/OpenAPI**.
+A API utiliza **Swagger/OpenAPI** para documentação dos endpoints.
 
-Com a aplicação em execução, a documentação interativa pode ser utilizada para visualizar os endpoints, parâmetros, modelos de dados e testar requisições.
+Com a aplicação em execução, a interface do Swagger pode ser acessada em:
 
 ```text
 http://localhost:8080/swagger-ui/index.html
 ```
 
-> A URL pode variar de acordo com a configuração utilizada para executar a aplicação.
+A documentação permite visualizar os endpoints disponíveis, parâmetros, modelos e respostas da API.
 
 ---
 
 ## 🐳 Docker
 
-O projeto possui configuração com Docker para facilitar a execução da aplicação e de suas dependências.
+O projeto possui configuração com **Docker Compose** para executar a aplicação e o PostgreSQL em containers.
 
-Com Docker instalado, o ambiente pode ser iniciado utilizando:
+O ambiente contém dois serviços principais:
+
+```text
+Docker Compose
+│
+├── db
+│   └── PostgreSQL 15
+│
+└── app
+    └── Spring Boot / Java 21
+```
+
+A aplicação aguarda o banco de dados estar disponível antes de iniciar e possui health check para acompanhamento do estado do serviço.
+
+### Executando com Docker
+
+Com Docker e Docker Compose instalados:
 
 ```bash
 docker compose up --build
 ```
 
-Para encerrar:
+A API ficará disponível em:
+
+```text
+http://localhost:8080
+```
+
+Para encerrar os containers:
 
 ```bash
 docker compose down
@@ -212,13 +237,11 @@ docker compose down
 
 ### Pré-requisitos
 
-Para executar o projeto localmente, é necessário ter instalado:
+Para executar o backend fora do Docker:
 
 - Java 21;
 - Maven;
-- PostgreSQL;
-
-ou utilizar Docker para subir as dependências necessárias.
+- PostgreSQL.
 
 ### 1. Clone o repositório
 
@@ -232,11 +255,17 @@ git clone https://github.com/scaglia-aylla1/financeiro.git
 cd financeiro
 ```
 
-### 3. Configure o banco de dados
+### 3. Configure o ambiente
 
-Configure as variáveis/propriedades necessárias para conexão com PostgreSQL de acordo com o ambiente utilizado.
+O repositório possui um arquivo:
 
-Nunca versione senhas, secrets ou chaves JWT diretamente no repositório.
+```text
+.env.example
+```
+
+Ele serve como referência para as configurações necessárias.
+
+Não versione senhas, secrets ou credenciais reais no repositório.
 
 ### 4. Execute os testes
 
@@ -268,34 +297,77 @@ mvnw.cmd spring-boot:run
 
 ---
 
-## 🔄 CI/CD
+## 🔄 Integração contínua
 
-O projeto utiliza **GitHub Actions** para automatizar verificações do projeto.
+O projeto utiliza **GitHub Actions** para validar automaticamente o backend.
 
-A pipeline permite executar etapas como build e testes automaticamente a partir de alterações enviadas ao repositório.
+A pipeline é executada em:
 
-Isso ajuda a identificar problemas antes que novas alterações sejam incorporadas ao projeto.
+- `push` para `main` ou `master`;
+- `pull request` direcionado para `main` ou `master`.
+
+Durante a execução:
+
+1. o código do repositório é obtido pelo runner;
+2. o **JDK 21 (Temurin)** é configurado;
+3. o cache do Maven é habilitado;
+4. um serviço com **PostgreSQL 15** é iniciado;
+5. as configurações necessárias para conexão com o banco são fornecidas ao Spring;
+6. o Maven executa:
+
+```bash
+mvn -B clean verify
+```
+
+Dessa forma, o build e a suíte de testes são executados automaticamente antes da integração das alterações.
+
+O PostgreSQL utilizado no workflow também permite validar a inicialização da aplicação com o banco utilizado pelo projeto, incluindo **Flyway e JPA/Hibernate**.
+
+---
+
+## 🔧 Configuração para produção
+
+O projeto possui um profile específico para produção que utiliza variáveis de ambiente para informações sensíveis e configurações dependentes do ambiente.
+
+Entre elas estão:
+
+```text
+SPRING_DATASOURCE_URL
+SPRING_DATASOURCE_USERNAME
+SPRING_DATASOURCE_PASSWORD
+JWT_SECRET
+JWT_EXPIRATION_MS
+CORS_ALLOWED_ORIGINS
+```
+
+Isso permite manter credenciais e secrets fora do código-fonte.
+
+O CORS também pode ser configurado através de variável de ambiente, permitindo definir quais aplicações frontend estão autorizadas a consumir a API.
 
 ---
 
 ## 📚 Principais aprendizados
 
-Durante o desenvolvimento deste projeto, pude colocar em prática conceitos importantes de desenvolvimento backend, entre eles:
+Durante o desenvolvimento deste projeto, coloquei em prática conceitos importantes de desenvolvimento backend, incluindo:
 
-- estruturação de uma API REST com Spring Boot;
-- separação de responsabilidades em camadas;
-- autenticação e autorização com Spring Security e JWT;
-- proteção de recursos pertencentes a diferentes usuários;
-- persistência com JPA/Hibernate;
-- migrations de banco de dados com Flyway;
+- criação de APIs REST com Spring Boot;
+- organização de responsabilidades em camadas;
+- autenticação e autorização com Spring Security;
+- utilização de JWT, Access Token e Refresh Token;
+- proteção dos dados pertencentes a diferentes usuários;
+- persistência com JPA/Hibernate e PostgreSQL;
+- migrations com Flyway;
+- DTOs e mapeamento de dados;
+- validação de entrada;
 - tratamento centralizado de exceções;
-- validação de dados;
-- testes unitários e de integração;
-- documentação de APIs com OpenAPI;
-- utilização de Docker;
-- automação de build e testes com GitHub Actions.
+- testes automatizados;
+- documentação de APIs com Swagger/OpenAPI;
+- containerização com Docker;
+- execução de múltiplos serviços com Docker Compose;
+- automação de build e testes com GitHub Actions;
+- configuração de diferentes ambientes através de variáveis de ambiente.
 
-Mais do que implementar funcionalidades, o projeto serviu para praticar como diferentes partes de uma aplicação backend se relacionam e como decisões de segurança, persistência e testes afetam a estrutura do sistema.
+Mais do que implementar as funcionalidades do sistema financeiro, o projeto me permitiu compreender melhor como **segurança, persistência, testes, configuração e infraestrutura se relacionam em uma aplicação backend**.
 
 ---
 
@@ -303,7 +375,7 @@ Mais do que implementar funcionalidades, o projeto serviu para praticar como dif
 
 **Aylla Scaglia**
 
-Desenvolvedora em início de carreira com foco em **Backend Java**, estudando e construindo projetos com Java, Spring Boot e tecnologias relacionadas ao desenvolvimento de APIs.
+Desenvolvedora em início de carreira com foco em **Backend Java**, construindo projetos com Java, Spring Boot e tecnologias relacionadas ao desenvolvimento de APIs.
 
-- GitHub: [scaglia-aylla1](https://github.com/scaglia-aylla1)
-- LinkedIn: [Aylla Scaglia](https://www.linkedin.com/in/aylla-scaglia/)
+GitHub: `scaglia-aylla1`  
+LinkedIn: `aylla-scaglia`
