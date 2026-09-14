@@ -81,21 +81,23 @@ Essa validação também protege a aplicação contra cenários de **IDOR (Insec
 
 ---
 
-## 🏗️ Arquitetura
+## 🏗️ Organização do backend
 
-O backend foi organizado em camadas, separando as principais responsabilidades da aplicação.
+A aplicação foi organizada separando as principais responsabilidades em pacotes.
 
 ```text
-src/main/java
+src/main/java/.../
 │
-├── controller
-├── service
-├── repository
-├── model
-├── dto
-├── security
-├── exception
-└── config
+├── config/
+├── controller/
+├── dto/
+├── enums/
+├── exception/
+├── mapper/
+├── model/
+├── repository/
+├── service/
+└── FinanceiroApplication.java
 ```
 
 De forma simplificada, o fluxo de uma requisição segue:
