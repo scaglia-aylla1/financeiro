@@ -12,7 +12,7 @@
 	<artifactId>financeiro</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>financeiro</name>
-	<description>Demo project for Spring Boot</description>
+	<description>API REST para gerenciamento financeiro pessoal com autenticação JWT, segurança, testes automatizados e PostgreSQL</description>
 	<url/>
 	<licenses>
 		<license/>
